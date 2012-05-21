@@ -1,14 +1,10 @@
 import unittest
 import Mongodump
 import os, shutil
-from mock import Mock
+from mock import Mock, create_autospec
 
 
-def callerside_effect():
-    os.mkdir("dump")
-
-callermock = Mock()
-callermock.return_value = """ 
+return_str = """ 
 connected to: 127.0.0.1
 Mon May 21 19:43:58 all dbs
 Mon May 21 19:43:58 DATABASE: teste	 to 	dump/teste
@@ -17,7 +13,14 @@ Mon May 21 19:43:59 		 603980 objects
 Mon May 21 19:43:59 	Metadata for teste.log to dump/teste/log.metadata.json
 Mon May 21 19:43:59 DATABASE: apsdk	 to 	dump/apsdk"""
 
+def caller(arg):
+    pass
 
+def side_effects(arg):
+    os.mkdir(os.getcwd() +"/dump")
+    return return_str
+
+callermock = create_autospec(caller, return_value = return_str, side_effects = side_effects)
 
 
 class TestMongodump(unittest.TestCase):
@@ -53,14 +56,14 @@ class TestMongodump(unittest.TestCase):
         self.assertEqual(mongodump.cmd, cmd)
                         
     def test_run_dump_directory(self):
-        mongodump = Mongodump.Mongodump(host = '127.0.0.1', db = 'teste', collections = ['log'])
+        mongodump = Mongodump.Mongodump(host = '127.0.0.1', db = 'teste', collections = ['log'], caller = callermock)
         mongodump.run()
         directories = [name for name in os.listdir(os.getcwd()) if os.path.isdir(name)]
         self.assertTrue('dump' in directories)
 
 
     def test_run_objectnumber(self):
-        mongodump = Mongodump.Mongodump(host = '127.0.0.1', db = 'teste', collections = ['log'])
+        mongodump = Mongodump.Mongodump(host = '127.0.0.1', db = 'teste', collections = ['log'], caller = callermock)
         self.assertEqual(mongodump.get_objectsdumped(), [603980])
 
     # def test_behavior_with_invalid_hosts(self):
