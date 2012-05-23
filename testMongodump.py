@@ -15,7 +15,8 @@ Mon May 21 19:43:59 	Metadata for teste.log to dump/teste/log.metadata.json
 Mon May 21 19:43:59 DATABASE: apsdk	 to 	dump/apsdk"""
 
 erroneoushost_str = """
-Tue May 22 10:39:30 getaddrinfo("erroneous") failed: No address associated with hostname
+Tue May 22 10:39:30 getaddrinfo("erroneous") failed: 
+No address associated with hostname
 couldn't connect to [erroneous] couldn't connect to server erroneous:27017
 """
 
