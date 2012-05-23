@@ -1,15 +1,6 @@
 import unittest
 import Mongorestore
 
-
-def successful_call(arg):
-    os.mkdir(os.getcwd() +"/dump")
-    return return_str
-
-def erroneoushost_call(arg):
-    os.mkdir(os.getcwd() +"/dump")
-    raise CalledProcessError(255,"host not found")
-
 class TestMongorestore(unittest.TestCase):
 
     def setUp(self):
@@ -22,3 +13,5 @@ class TestMongorestore(unittest.TestCase):
         mongorestore = Mongorestore.Mongorestore()
         cmd = ['mongorestore']
         self.assertEqual(mongorestore.cmd, cmd)
+
+    def 
