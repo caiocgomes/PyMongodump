@@ -24,5 +24,17 @@ class Mongorestore:
 
     def check_errors(self):
         match = self.matcherror.findall(self.output)
-        if match:
-            raise subprocess.CalledProcessError(255, " ".join(match))
+        for error in match:
+            if "don't know what to do with file" in error:
+                raise subprocess.CalledProcessError(255, self.cmd, self.output,
+                        "Mongorestore didn't find the dump file to restore")
+
+
+if __name__ == "__main__":
+    mongorestore = Mongorestore()
+    try:
+        mongorestore.run()
+    except subprocess.CalledProcessError as exception:
+        print "Mongorestore did not succeed."
+        print "Exit status: %s"%(exception.returncode,)
+        print "Message: %s - %s"%(exception.cmd,exception.output)
