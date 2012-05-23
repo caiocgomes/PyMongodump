@@ -26,8 +26,10 @@ class Mongorestore:
         match = self.matcherror.findall(self.output)
         for error in match:
             if "don't know what to do with file" in error:
-                raise subprocess.CalledProcessError(255, self.cmd, self.output,
-                        "Mongorestore didn't find the dump file to restore")
+                raise subprocess.CalledProcessError(255, self.cmd, "Mongorestore didn't find the dump file to restore")
+            else:
+                raise  subprocess.CalledProcessError(255, self.cmd, error)
+
 
 
 if __name__ == "__main__":
