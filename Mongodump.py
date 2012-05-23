@@ -17,6 +17,7 @@ class Mongodump:
         the entire database will be dumped.
 
         """
+        self.objectsfinder = re.compile("[0-9]+(?= objects)")
         if collections:
             self.collections = collections
             cmds = ['mongodump --host %s --db %s --collection %s'%(host,db,col)
@@ -37,7 +38,8 @@ class Mongodump:
 
     def _calculate_objects_dumped(self, output):
         """ Find the number of objects dumped by searching 'output' """
-        match  = re.findall("[0-9]+(?= objects)", output)
+        match  = self.objectsfinder.findall(output)
+        print match
         return int(match[0])
 
     def _set_caller(self, caller):
@@ -71,13 +73,13 @@ class Mongodump:
 
     def run(self):
         """ run the mongodump """
-        self.outputs = []
         caller = self._get_caller()
         self.outputs = [caller(cmd) for cmd in self.cmd]
         return self.outputs
 
 if  __name__ == "__main__":
-    mongodump = Mongodump(host = "loasdfasdfasdfadfaghiost", db = "teste", collection = "log")
+    mongodump = Mongodump(host = "localhost", db = "teste", collections = ["log"])
     outputs =  mongodump.run()
+    print mongodump.get_objectsdumped()
 
 

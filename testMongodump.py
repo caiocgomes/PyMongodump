@@ -1,8 +1,8 @@
 import unittest
 import Mongodump
 import os, shutil
-from subprocess import CalledProcessError
 from mock import Mock, create_autospec
+from subprocess import CalledProcessError
 
 
 return_str = """
