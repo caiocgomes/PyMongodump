@@ -11,7 +11,7 @@ setup(
         packages = ['PyMongodump', 'PyMongodump.test'],
         license  = 'Creative Commons Attribution-Share Alike license',
         description = 'Library for mongodump and mongorestore automated operations',
-        long_description = open('README.txt').read(),
+        long_description = open('README.md').read(),
         install_requires = [
             "PyMongo >= 1.11",
             "distribute",
