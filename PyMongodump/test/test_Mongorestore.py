@@ -1,5 +1,5 @@
 import unittest
-import Mongorestore
+from PyMongodump import Mongorestore
 from subprocess import CalledProcessError
 
 invalidhost_str = "couldn't connect to [127.0.0.1] couldn't connect to server 127.0.0.1:27017"
