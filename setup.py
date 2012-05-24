@@ -1,4 +1,7 @@
-from distutils.core import setup
+#!/usr/bin/env python
+# -*- coding: utf-8 -*- 
+from setuptools import setup
+
 
 setup(
         name     = 'PyMongodump',
@@ -10,7 +13,8 @@ setup(
         description = 'Library for mongodump and mongorestore automated operations',
         long_description = open('README.txt').read(),
         install_requires = [
-            "PyMongo >= 1.11"
+            "PyMongo >= 1.11",
+            "distribute",
             ],
         entry_points = { 'console_scripts' : []},
         test_suite = 'nose.collector',
