@@ -4,19 +4,19 @@ import re
 
 class Mongodump:
     """ Class to use the mongodump command to dump a
-    mongodb collection into a json file """
+        mongodb collection into a json file """
 
     def __init__(self, host = '', db = '', collections = [], caller = None):
         """ Initialize the object: 
-        host - the host that contains the mongodb instance to be dumped.
-        db   - the database that contains the collection to be dumped.
-        collections - if present, a list of the collections to be dumped
-        collection  - if present, the name of a single collection to be dumped
+            host - the host that contains the mongodb instance to be dumped.
+            db   - the database that contains the collection to be dumped.
+            collections - if present, a list of the collections to be dumped
+            collection  - if present, the name of a single collection to be dumped
 
-        If no collection or collections argument is found,
-        the entire database will be dumped.
+            If no collection or collections argument is found,
+            the entire database will be dumped.
 
-        """
+            """
         self.objectsfinder = re.compile("[0-9]+(?= objects)")
         if collections:
             self.collections = collections

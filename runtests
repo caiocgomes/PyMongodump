@@ -1,0 +1,3 @@
+#!/bin/bash
+pywatch 'clear;nosetests -v --with-notify --no-start-message' PyMongodump/*.py PyMongodump/test/*.py
+
