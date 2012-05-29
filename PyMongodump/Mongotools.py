@@ -40,9 +40,11 @@ class TimeObject:
         if type(timeobject) in [int, long]:
             self.mongotimestamp = timeobject
             self.datetime       = Utilities.mongotimestamp2datetime(timeobject)
+            self.tzinfo         = self.utctz
         elif type(timeobject) in [Utilities.datetime.datetime, Utilities.datetime.date]:
             self.datetime       = timeobject
             self.mongotimestamp = Utilities.datetime2mongotimestamp(timeobject)
+            self.tzinfo         = self.datetime.tzinfo
 
     def get_datetime(self, at_timezone = Utilities.tz.tzutc()):
         try:
@@ -53,6 +55,9 @@ class TimeObject:
 
     def get_mongotimestamp(self):
         return self.mongotimestamp
+
+    def get_yearmonth(self):
+        return (self.datetime.year, self.datetime.month)
 
 class MongoFill:
     def __init__(self, host = 'localhost' , db = 'tmp', col = 'tmp', port = 27017):
@@ -66,7 +71,8 @@ class MongoFill:
             self.col.insert(self.rnd_doc())
 
     def rnd_doc(self):
-        doc = { 'timestamp' : Utilities.rnd_datetime(),
+        date = Utilities.rnd_datetime()
+        doc = { 'timestamp' : TimeObject(date).get_mongotimestamp(),
                 'name'      : Utilities.rndword(5) + " "+ Utilities.rndword(5),
                 'salary'    : Utilities.random.randint(1000, 2000)   }
         return doc
