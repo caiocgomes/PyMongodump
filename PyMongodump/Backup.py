@@ -94,7 +94,7 @@ class BackupScript:
         else:
             self.loghandle = open(logpath,'a')
         try:
-            backup = BackupInicial(host = self.host, db = self.db, col = self.col)
+            self.backup = BackupInicial(host = self.host, db = self.db, col = self.col)
         except EmptyCollectionError:
             print "This collection is empty. Try again with a non-empty collection"
             sys.exit(errno.EDOM)
@@ -104,7 +104,7 @@ class BackupScript:
         if not os.path.exists(self.backup_dir):
             os.makedirs(self.backup_dir)
 
-    def initlog():
+    def initlog(self):
         print >>self.loghandle, "=============================================="
         print >>self.loghandle, "======= NOVO BACKUP INICIADO ================="
         print >>self.loghandle, "=============================================="
@@ -117,7 +117,7 @@ class BackupScript:
 
     def do_backup(self):
         self.initlog()
-        for query, (year, month) in itertools.izip(self.backup.iterate_queries(), backup.iterate_months()):
+        for query, (year, month) in itertools.izip(self.backup.iterate_queries(), self.backup.iterate_months()):
             print >>self.loghandle, "Backuping %s / %s ... "%(month, year),
             mongodump = Mongodump.Mongodump(host = self.host, db = self.db, collections = [self.col])
             mongodump.set_query(query)
