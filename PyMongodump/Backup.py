@@ -6,7 +6,11 @@ from PyMongodump import Mongotools, Mongodump
 import subprocess
 import argparse
 import itertools
-import os, shutil 
+import os, shutil, sys, errno
+
+
+class EmptyCollectionError(ValueError):
+    pass
 
 def iterate_months((year0,month0), (year1, month1)):
     months_to_iterate = (year1 - year0) * 12 + month1 - month0 + 1
@@ -26,7 +30,7 @@ class BackupInicial:
             self.first_date = Mongotools.TimeObject(list(self.col.find().sort("timestamp", pymongo.ASCENDING).limit(1))[0]["timestamp"])
             self.last_date  = Mongotools.TimeObject(list(self.col.find().sort("timestamp", pymongo.DESCENDING).limit(1))[0]["timestamp"])
         else:
-            raise ValueError("No itens in this collection")
+            raise EmptyCollectionError("This collection is empty")
         self.date_operations = BackupHelper(self.first_date, self.last_date)
 
     def iterate_queries(self):
@@ -79,8 +83,49 @@ class BackupHelper:
 
 
 
+class BackupScript:
+    def __init__(self, host = "localhost", db = "tmp", col = "tmp", logpath = "backup.log", overwritelog = False):
+        self.host = host
+        self.db   = db
+        self.col  = col
+        self.logpath = logpath
+        if overwritelog:
+            self.loghandle = open(logpath,'w')
+        else:
+            self.loghandle = open(logpath,'a')
+        try:
+            backup = BackupInicial(host = self.host, db = self.db, col = self.col)
+        except EmptyCollectionError:
+            print "This collection is empty. Try again with a non-empty collection"
+            sys.exit(errno.EDOM)
 
+    def create_backup_dir(self):
+        self.backup_dir = os.getcwd() + '/backup/%s/%s'%(self.db, self.col)
+        if not os.path.exists(self.backup_dir):
+            os.makedirs(self.backup_dir)
 
+    def initlog():
+        print >>self.loghandle, "=============================================="
+        print >>self.loghandle, "======= NOVO BACKUP INICIADO ================="
+        print >>self.loghandle, "=============================================="
+        print >>self.loghandle, "= %s"%(datetime.datetime.now(),)
+
+    def logtarlist():
+        tarlist = sorted(os.listdir(self.backup_dir))
+        for bkfile in tarlist:
+            print >>self.loghandle, "\t file created: %s"%(bkfile)
+
+    def do_backup(self):
+        self.initlog()
+        for query, (year, month) in itertools.izip(self.backup.iterate_queries(), backup.iterate_months()):
+            print >>self.loghandle, "Backuping %s / %s ... "%(month, year),
+            mongodump = Mongodump.Mongodump(host = self.host, db = self.db, collections = [self.col])
+            mongodump.set_query(query)
+            mongodump.run()
+            print >>self.loghandle, "creating tarball ... ",
+            backup.tar_dump_directory(self.backup_dir, '%04s%02d'%(year,month))
+            print >>self.loghandle, "OK!"
+        self.logtarlist()
 
 def backupCommandLine():
     parser = argparse.ArgumentParser(prog = "backup88", description = "Backup mongodb")
@@ -89,37 +134,5 @@ def backupCommandLine():
     parser.add_argument('--collection', type = str, nargs = '?', required = True)
     parser.add_argument('--logpath', type = str, nargs = '?', default = "backup.log")
     args = parser.parse_args()
-    do_backup(args.host, args.db, args.collection, args.logpath)
-
-
-def create_backup_directory(db, col):
-    backup_dir = os.getcwd() + "/backup/%s/%s"%(db,col)
-    if not os.path.exists(backup_dir):
-        os.makedirs(backup_dir)
-    return backup_dir
-
-
-def do_backup(host, db, col, logpath):
-    print "Backuping %s.%s.%s: "%(host, db, col)
-    try:
-        backup = BackupInicial(host = host, db = db, col = col)
-        backup_dir = create_backup_directory(db,col)
-        run_backup_loop(backup, host, db, col, backup_dir, logpath)
-    except ValueError:
-        print "Error: No items on collection"
-
-def run_backup_loop(backup,host,db,col, backup_dir, logpath):
-    #DO BACKUP
-    logfile = open(logpath, 'w')
-    for (query,(year,month)) in itertools.izip(backup.iterate_queries(), backup.iterate_months()):
- 	logfile.writeline("Backuping %s / %s"%(month, year))
-        mongodump = Mongodump.Mongodump(host = host, db = db, collections = [col])
-        mongodump.set_query(query)
-        mongodump.run()
-	logfile.writeline("Creating tarball")
-        backup.tar_dump_directory(backup_dir, '/%04s%02d'%(year,month))
-        print "Backup: %s / %s "%(month, year)
-    tarlist = sorted(os.listdir(backup_dir))
-    print "files created: ", tarlist
-    print tarlist
-
+    script = BackupScript(args.host, args.db, args.collection, args.logpath)
+    script.do_backup()

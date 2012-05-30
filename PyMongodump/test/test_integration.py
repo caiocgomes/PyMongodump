@@ -22,11 +22,11 @@ class TestMongoFill(unittest.TestCase):
         mongocon.col.drop()
 
     # isso nao eh um teste unitario - teste de integracao
-    def test_connect_to_mongo(self):
+    def test_connect_to_mongo_integration(self):
         mongocon = Mongotools.MongoFill(host = self.host, db = self.db, col = self.col)
 
     # isso nao eh um teste unitario - teste de integracao
-    def test_connect_and_fill(self):
+    def test_connect_and_fill_integration(self):
         mongocon = Mongotools.MongoFill(host = self.host, db = self.db, col = self.col)
         dbsize = 0
         for i in xrange(10):
@@ -60,7 +60,7 @@ class TestBackupIntegration(unittest.TestCase):
             mongodump = Mongodump.Mongodump(host = self.host, db = self.db, collections = [self.col])
             mongodump.set_query(query)
             mongodump.run()
-            backup.tar_dump_directory('backup/%04s%02d'%(year,month))
+            backup.tar_dump_directory('backup/','%04s%02d'%(year,month))
         tarlist = sorted(os.listdir(os.getcwd() + "/backup"))
         self.assertEqual(tarlist, sorted(["%04s%02d.tar.gz"%(year,month) for (year,month) in backup.iterate_months()]))
 
@@ -79,14 +79,14 @@ class TestMongodumpIntegration(unittest.TestCase):
         except OSError:
             print "Directory /dump not found"
 
-    def test_dump(self):
+    def test_dump_integration(self):
         mongodump = Mongodump.Mongodump(host = self.host, db = self.db, collections = [self.col])
         mongodump.run()
         directories = [name for name in os.listdir(os.getcwd()) if os.path.isdir(name)]
         self.assertTrue('dump' in directories)
         self.assertEqual(mongodump.get_objectsdumped(), [1000])
 
-    def test_restore(self):
+    def test_restore_integration(self):
         mongodump = Mongodump.Mongodump(host = self.host, db = self.db, collections = [self.col])
         mongodump.run()
         self.mongocon.col.drop()

@@ -2,6 +2,7 @@ import unittest
 import datetime
 from PyMongodump import Backup, Mongotools
 from itertools import izip
+import os, shutil
 
 class TestBackup(unittest.TestCase):
 
@@ -51,4 +52,29 @@ class TestBackup(unittest.TestCase):
 
         calculated_dateranges = list(backup.iterate_timestamp_ranges())
         self.assertEqual(expected_dateranges, calculated_dateranges)
+
+
+def get_directories():
+    return [name for name in os.listdir(os.getcwd()) if os.path.isdir(name)]
+
+class TestBackupScript(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        try:
+            #shutil.rmtree(os.getcwd() + 'backup')
+            pass
+        except OSError:
+            pass
+
+    def test_commandline_args(self):
+       script = Backup.BackupScript(host = "localhost", db = "tmp", col = "tmp", logpath = "backup.log")
+       self.assertEqual([script.host, script.db, script.col, script.logpath], ["localhost", "tmp", "tmp", "backup.log"])
+
+    def test_create_backup_dir(self):
+        script = Backup.BackupScript()
+        script.create_backup_dir()
+        self.assertTrue('backup' in get_directories())
+
 
