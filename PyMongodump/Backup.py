@@ -87,8 +87,9 @@ def backupCommandLine():
     parser.add_argument('--host', default = "localhost", const = "localhost", type = str, nargs = '?', required = True)
     parser.add_argument('--db', type = str, nargs = '?', required = True)
     parser.add_argument('--collection', type = str, nargs = '?', required = True)
+    parser.add_argument('--logpath', type = str, nargs = '?', default = "backup.log")
     args = parser.parse_args()
-    do_backup(args.host, args.db, args.collection)
+    do_backup(args.host, args.db, args.collection, args.logpath)
 
 
 def create_backup_directory(db, col):
@@ -98,21 +99,24 @@ def create_backup_directory(db, col):
     return backup_dir
 
 
-def do_backup(host, db, col):
+def do_backup(host, db, col, logpath):
     print "Backuping %s.%s.%s: "%(host, db, col)
     try:
         backup = BackupInicial(host = host, db = db, col = col)
         backup_dir = create_backup_directory(db,col)
-        run_backup_loop(backup, host, db, col, backup_dir)
+        run_backup_loop(backup, host, db, col, backup_dir, logpath)
     except ValueError:
         print "Error: No items on collection"
 
-def run_backup_loop(backup,host,db,col, backup_dir):
+def run_backup_loop(backup,host,db,col, backup_dir, logpath):
     #DO BACKUP
+    logfile = open(logpath, 'w')
     for (query,(year,month)) in itertools.izip(backup.iterate_queries(), backup.iterate_months()):
+ 	logfile.writeline("Backuping %s / %s"%(month, year))
         mongodump = Mongodump.Mongodump(host = host, db = db, collections = [col])
         mongodump.set_query(query)
         mongodump.run()
+	logfile.writeline("Creating tarball")
         backup.tar_dump_directory(backup_dir, '/%04s%02d'%(year,month))
         print "Backup: %s / %s "%(month, year)
     tarlist = sorted(os.listdir(backup_dir))

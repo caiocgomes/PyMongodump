@@ -15,6 +15,9 @@ setup(
         install_requires = [
             "PyMongo >= 1.11",
             "distribute",
+	    "argparse",
+	    "python-dateutil",
+	    "nose",
             ],
         entry_points = { 'console_scripts' : ["backup88 = PyMongodump.Backup:backupCommandLine" ]},
         test_suite = 'nose.collector',

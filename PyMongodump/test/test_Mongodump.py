@@ -1,7 +1,6 @@
 import unittest
 from PyMongodump import Mongodump
 import os, shutil
-from mock import Mock, create_autospec
 from subprocess import CalledProcessError
 
 
