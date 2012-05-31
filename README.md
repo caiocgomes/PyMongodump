@@ -18,6 +18,8 @@ This module is in a very early stage and still does not have a lot of real funct
 
 # Features wishlist:
 
-- deal with files in custom locations
-- ...
+- dump files in custom locations
+- custom name for dump files
+- handle replica sets correctly
+
 
