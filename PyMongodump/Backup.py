@@ -7,7 +7,7 @@ import subprocess
 import argparse
 import itertools
 import os, shutil, sys, errno
-
+import logging
 
 class EmptyCollectionError(ValueError):
     pass
@@ -84,15 +84,13 @@ class BackupHelper:
 
 
 class BackupScript:
-    def __init__(self, host = "localhost", db = "tmp", col = "tmp", logpath = "backup.log", overwritelog = False):
+    def __init__(self, host = "localhost", db = "tmp", col = "tmp", logpath = "backup.log"):
         self.host = host
         self.db   = db
         self.col  = col
         self.logpath = logpath
-        if overwritelog:
-            self.loghandle = open(logpath,'w')
-        else:
-            self.loghandle = open(logpath,'a')
+        self.logger  = logging.getLogger('backup_log')
+        self.initialize_logger()
         try:
             self.backup = BackupInicial(host = self.host, db = self.db, col = self.col)
         except EmptyCollectionError:
@@ -104,32 +102,31 @@ class BackupScript:
         if not os.path.exists(self.backup_dir):
             os.makedirs(self.backup_dir)
 
-    def initlog(self):
-        print >>self.loghandle, "=============================================="
-        print >>self.loghandle, "======= NOVO BACKUP INICIADO ================="
-        print >>self.loghandle, "=============================================="
-        print >>self.loghandle, "= %s"%(datetime.datetime.now(),)
+    def initialize_logger(self):
+        fhandler  = logging.FileHandler(self.logpath)
+        formatter = logging.Formatter('%(asctime)s - %(message)s')
+        fhandler.setFormatter(formatter)
+        self.logger.setLevel(logging.DEBUG)
+        self.logger.addHandler(fhandler)
+        self.logger.info("========================================")
+        self.logger.info("==== NOVO BACKUP INICIADO ==============")
+        self.logger.info("= %s                                    "%(datetime.datetime.now(),))
+        self.logger.info("========================================")
 
     def logtarlist():
-        tarlist = sorted(os.listdir(self.backup_dir))	
+        tarlist = sorted(os.listdir(self.backup_dir))
         for bkfile in tarlist:
-            print >>self.loghandle, "\t file created: %s"%(bkfile)
-
-    def logevent(self, text):
-	print >>self.loghandle, "\t %s - "%(datetime.datetime.now().time()",
-	print >>self.loghandle, text,
-
+            self.logger.info("\t file created: %s"%(bkfile))
 
     def do_backup(self):
-        self.initlog()
         for query, (year, month) in itertools.izip(self.backup.iterate_queries(), self.backup.iterate_months()):
-	    self.logevent("Dumping month: %s/%s ..."%(month, year))
+        self.logger.info("Dumping month: %s/%s ..."%(month, year))
             mongodump = Mongodump.Mongodump(host = self.host, db = self.db, collections = [self.col])
             mongodump.set_query(query)
             mongodump.run()
-            self.logevent("creating tarball ...")
+            self.logger.info("creating tarball ...")
             self.backup.tar_dump_directory(self.backup_dir, '%04s%02d'%(year,month))
-            self.logevent("OK!\n")
+            self.logger.info("OK!\n")
         self.logtarlist()
 
 def backupCommandLine():
