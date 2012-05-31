@@ -1,6 +1,9 @@
 import subprocess
 import re
 
+def add_dictionaries(d1, d2):
+    return dict(d1.items() + d2.items())
+
 
 class Mongodump:
     """ Class to use the mongodump command to dump a
@@ -20,20 +23,23 @@ class Mongodump:
         self.objectsfinder = re.compile("[0-9]+(?= objects)")
         if collections:
             self.collections = collections
-            cmds = ['mongodump --host %s --db %s --collection %s'%(host,db,col)
-                    for col in collections]
-            self.cmd = [cmd.split(' ') for cmd in cmds]
+            self.runpars = [{'host' : host, 'db' : db, 'collection' : col} for col in collections]
         else:
             self.collections = []
-            cmd = 'mongodump --host %s --db %s'%(host,db)
-            self.cmd = [cmd.split(' ')]
+            self.runpars = [{'host' : host, 'db' : db}]
 
         if caller:
             self._set_caller(caller)
 
     def _update_cmds(self, newcmds):
         """ Update the commands to be run by appending newcmds. """
-        self.cmd = [cmd + newcmds for cmd in self.cmd]
+        for pardict in self.runpars:
+            pardict.update(newcmds)
+
+    def set_query(self, querydict):
+        """ set the query """
+        self.query = str(querydict).replace("'",'"')
+        self._update_cmds({'query' : self.query})
 
 
     def _calculate_objects_dumped(self, output):
@@ -47,16 +53,11 @@ class Mongodump:
         self.caller = caller
 
     def _get_caller(self):
-        """ Get a function that can call external programs""" 
+        """ Get a function that can call external programs"""
         if hasattr(self, 'caller'):
             return self.caller
         else:
             return subprocess.check_output
-
-    def set_query(self, querydict):
-        """ set the query """
-        self.query = str(querydict).replace("'",'"')
-        self._update_cmds(['-q', self.query])
 
     def get_objectsdumped(self):
         """ get the number of objects dumped"""
@@ -71,10 +72,23 @@ class Mongodump:
         return self.objectsdumped
 
 
+
+    def _build_command_line(self, runpars):
+        cmd = 'mongodump --host %(host)s --db %(db)s'%runpars
+        if 'collection' in runpars:
+            cmd = cmd + ' --collection %(collection)s'%runpars
+        if 'query' in runpars:
+            return cmd.split(' ') + ['-q', '%(query)s'%runpars]
+        else:
+            return cmd.split(' ')
+
     def run(self):
         """ run the mongodump """
         caller = self._get_caller()
-        self.outputs = [caller(cmd) for cmd in self.cmd]
+        self.outputs = []
+        for pars in self.runpars:
+            cmd = self._build_command_line(pars)
+            self.outputs.append(caller(cmd))
         return self.outputs
 
 if  __name__ == "__main__":

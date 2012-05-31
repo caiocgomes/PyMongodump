@@ -6,6 +6,7 @@ import itertools
 from PyMongodump import Mongotools, Mongodump, Mongorestore, Backup
 from dateutil import tz
 import os, shutil
+import glob
 
 #########################
 ### INTEGRATION TESTS ###
@@ -44,6 +45,7 @@ class TestBackupIntegration(unittest.TestCase):
         self.col  = 'testecol'
         self.mongocon = Mongotools.MongoFill(host = self.host, db = self.db, col = self.col)
         self.mongocon.fill(n= 10000)
+        self.backup_dir = os.getcwd() + "/backup"
 
     def tearDown(self):
         self.mongocon.col.drop()
@@ -55,14 +57,17 @@ class TestBackupIntegration(unittest.TestCase):
 
     def test_backup_integration(self):
         backup = Backup.BackupInicial(host = self.host, db = self.db, col = self.col)
-        os.mkdir(os.getcwd() + "/backup")
+        if not os.path.exists(self.backup_dir):
+            os.makedirs(self.backup_dir)
         for (query,(year,month)) in itertools.izip(backup.iterate_queries(), backup.iterate_months()):
             mongodump = Mongodump.Mongodump(host = self.host, db = self.db, collections = [self.col])
             mongodump.set_query(query)
             mongodump.run()
             backup.tar_dump_directory('backup/','%04s%02d'%(year,month))
-        tarlist = sorted(os.listdir(os.getcwd() + "/backup"))
-        self.assertEqual(tarlist, sorted(["%04s%02d.tar.gz"%(year,month) for (year,month) in backup.iterate_months()]))
+        tarlist = sorted(glob.glob("./backup/*.tar.gz")) #sorted(os.listdir(os.getcwd() + "/backup"))
+        for k in tarlist:
+            print k
+        self.assertEqual(tarlist, sorted(["./backup/%04s%02d.tar.gz"%(year,month) for (year,month) in backup.iterate_months()]))
 
 class TestMongodumpIntegration(unittest.TestCase):
     def setUp(self):

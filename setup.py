@@ -15,11 +15,13 @@ setup(
         install_requires = [
             "PyMongo >= 1.11",
             "distribute",
-	    "argparse",
-	    "python-dateutil",
-	    "nose",
+            "argparse",
+            "python-dateutil",
+            "nose",
+            "ludibrio",
+            "unittest",
             ],
         entry_points = { 'console_scripts' : ["backup88 = PyMongodump.Backup:backupCommandLine" ]},
         test_suite = 'nose.collector',
-        tests_require = ['nose'],
+        tests_require = ['nose', "ludibrio", "unittest"],
         )

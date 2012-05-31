@@ -3,6 +3,7 @@ import datetime
 from PyMongodump import Backup, Mongotools
 from itertools import izip
 import os, shutil
+import ludibrio
 
 class TestBackup(unittest.TestCase):
 
@@ -63,7 +64,7 @@ class TestBackupScript(unittest.TestCase):
 
     def tearDown(self):
         try:
-            #shutil.rmtree(os.getcwd() + 'backup')
+            shutil.rmtree(os.getcwd() + 'backup')
             pass
         except OSError:
             pass
@@ -76,5 +77,24 @@ class TestBackupScript(unittest.TestCase):
         script = Backup.BackupScript()
         script.create_backup_dir()
         self.assertTrue('backup' in get_directories())
+
+    def test_backup_script_do_backup(self):
+        with ludibrio.Mock() as mock_backupper:
+            mock_backupper.iterate_queries() >> ["query1", "query2", "query3"]
+            mock_backupper.iterate_months()  >> [(2012,1), (2012,2), (2012,3)]
+            mock_backupper.tar_dump_directory('/home/rafael/Dropbox/Programs/Apontador/Mongobackuping/PyMongodump/backup/tmp/tmp/', 'tmptmp201201')
+            mock_backupper.tar_dump_directory('/home/rafael/Dropbox/Programs/Apontador/Mongobackuping/PyMongodump/backup/tmp/tmp/', 'tmptmp201202')
+            mock_backupper.tar_dump_directory('/home/rafael/Dropbox/Programs/Apontador/Mongobackuping/PyMongodump/backup/tmp/tmp/', 'tmptmp201203')
+
+        with ludibrio.Stub() as mock_dumper:
+            mock_dumper.set_query('query1') >> None
+            mock_dumper.set_query('query2') >> None
+            mock_dumper.set_query('query3') >> None
+            mock_dumper.run()               >> None
+
+        script = Backup.BackupScript(host = "localhost", db = "tmp", col = "tmp", logpath = "backup.log", backupper = mock_backupper, dumper = mock_dumper)
+        script.do_backup()
+        mock_backupper.validate()
+
 
 

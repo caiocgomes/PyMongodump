@@ -34,7 +34,7 @@ def datetime2mongotimestamp(dtime):
     return int(stdtst*1000 + localdtime.microsecond//1000)
 
 def rnd_datetime():
-    year  = random.randint(2000, 2012)
+    year  = random.randint(2011, 2012)
     month = random.randint(1,12)
     day   = random.randint(1,calendar.monthrange(year, month)[1])
 

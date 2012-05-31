@@ -42,23 +42,23 @@ class TestMongodump(unittest.TestCase):
 
     def test_cmd_no_collection(self):
         mongodump = Mongodump.Mongodump(host = '127.0.0.1', db = 'teste')
-        cmd = [['mongodump', '--host', '127.0.0.1', '--db', 'teste']]
-        self.assertEqual(mongodump.cmd, cmd)
+        pars = {'host' : '127.0.0.1', 'db' : 'teste'}
+        self.assertEqual(mongodump.runpars, [pars])
 
     def test_cmd_multiple_collections (self):
         mongodump = Mongodump.Mongodump(host = '127.0.0.1', db = 'teste', collections = ['log0', 'log1'])
         prefix = ['mongodump', '--host', '127.0.0.1', '--db', 'teste']
-        cmd1   = prefix + ['--collection', 'log0']
-        cmd2   = prefix + ['--collection', 'log1']
-        self.assertEqual(mongodump.cmd, [cmd1, cmd2])
+        par1   = {'host' : '127.0.0.1', 'db' : 'teste', 'collection' : 'log0'}
+        par2   = {'host' : '127.0.0.1', 'db' : 'teste', 'collection' : 'log1'}
+        self.assertEqual(mongodump.runpars, [par1, par2])
 
 
     def test_setquery(self):
         mongodump = Mongodump.Mongodump(host = '127.0.0.1', db = 'teste', collections = ['log'])
         mongodump.set_query({"timestamp":{"$gt":10000}})
-        cmd = [['mongodump', '--host', '127.0.0.1', '--db', 'teste', '--collection', 'log', '-q', '{"timestamp": {"$gt": 10000}}']]
+        pars = [{'host' : '127.0.0.1', 'db' : 'teste', 'collection' : 'log', 'query' : '{"timestamp": {"$gt": 10000}}'}]
         self.assertEqual(mongodump.query, '{"timestamp": {"$gt": 10000}}')
-        self.assertEqual(mongodump.cmd, cmd)
+        self.assertEqual(mongodump.runpars, pars)
 
     def test_run_dump_directory(self):
         mongodump = Mongodump.Mongodump(host = '127.0.0.1', db = 'teste', collections = ['log'], caller = successful_call)

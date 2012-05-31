@@ -8,6 +8,7 @@ import argparse
 import itertools
 import os, shutil, sys, errno
 import logging
+import ludibrio
 
 class EmptyCollectionError(ValueError):
     pass
@@ -84,49 +85,72 @@ class BackupHelper:
 
 
 class BackupScript:
-    def __init__(self, host = "localhost", db = "tmp", col = "tmp", logpath = "backup.log"):
+    def __init__(self, host = "localhost", db = "tmp", col = "tmp", logpath = "backup.log", **kwargs):# backupper = None, dumper = None):
         self.host = host
         self.db   = db
         self.col  = col
         self.logpath = logpath
         self.logger  = logging.getLogger('backup_log')
         self.initialize_logger()
-        try:
-            self.backup = BackupInicial(host = self.host, db = self.db, col = self.col)
-        except EmptyCollectionError:
-            print "This collection is empty. Try again with a non-empty collection"
-            sys.exit(errno.EDOM)
+        if 'backupper' in kwargs:
+            self.set_backupper(backupper = kwargs['backupper'])
+        else:
+            self.set_backupper()
+        if 'dumper' in kwargs:
+            self.set_dumper(dumper = kwargs['dumper'])
+        else:
+            self.set_dumper()
+
+    def set_backupper(self, **kwargs):
+        if 'backupper' in kwargs:
+            self.backup = kwargs['backupper']
+        else:
+            try:
+                self.backup = BackupInicial(host = self.host, db = self.db, col = self.col)
+            except:
+                self.logger.error("This collection is empty. Try again with a non-empty collection.")
+
+
+    def iterate_backupper_months(self):
+        return self.backup.iterate_months()
+
+    def set_dumper(self, **kwargs):
+        if 'dumper' in kwargs:
+            self.dumper = kwargs['dumper']
+        else:
+            self.dumper = Mongodump.Mongodump(host = self.host, db = self.db, collections = [self.col])
 
     def create_backup_dir(self):
-        self.backup_dir = os.getcwd() + '/backup/%s/%s'%(self.db, self.col)
+        self.backup_dir = os.getcwd() + '/backup/%s/%s/'%(self.db, self.col)
         if not os.path.exists(self.backup_dir):
             os.makedirs(self.backup_dir)
 
     def initialize_logger(self):
         fhandler  = logging.FileHandler(self.logpath)
-        formatter = logging.Formatter('%(asctime)s - %(message)s')
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
         fhandler.setFormatter(formatter)
         self.logger.setLevel(logging.DEBUG)
         self.logger.addHandler(fhandler)
         self.logger.info("========================================")
         self.logger.info("==== NOVO BACKUP INICIADO ==============")
-        self.logger.info("= %s                                    "%(datetime.datetime.now(),))
+        self.logger.info("==== %s ========                        "%(datetime.datetime.now(),))
         self.logger.info("========================================")
 
-    def logtarlist():
+    def logtarlist(self):
         tarlist = sorted(os.listdir(self.backup_dir))
         for bkfile in tarlist:
             self.logger.info("\t file created: %s"%(bkfile))
 
     def do_backup(self):
+        self.create_backup_dir()
         for query, (year, month) in itertools.izip(self.backup.iterate_queries(), self.backup.iterate_months()):
-        self.logger.info("Dumping month: %s/%s ..."%(month, year))
-            mongodump = Mongodump.Mongodump(host = self.host, db = self.db, collections = [self.col])
-            mongodump.set_query(query)
-            mongodump.run()
-            self.logger.info("creating tarball ...")
-            self.backup.tar_dump_directory(self.backup_dir, '%04s%02d'%(year,month))
-            self.logger.info("OK!\n")
+            self.logger.info("Dumping month: %s/%s ..."%(month, year))
+            self.dumper.set_query(query)
+            self.dumper.run()
+            tarfilename = "%s%s%04s%02d"%(self.db, self.col, year, month)
+            self.logger.info("creating tarball on %s%s.tar.gz ..."%(self.backup_dir,tarfilename))
+            self.backup.tar_dump_directory(self.backup_dir, tarfilename)
+            self.logger.info("OK!")
         self.logtarlist()
 
 def backupCommandLine():
