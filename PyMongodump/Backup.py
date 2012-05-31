@@ -111,20 +111,25 @@ class BackupScript:
         print >>self.loghandle, "= %s"%(datetime.datetime.now(),)
 
     def logtarlist():
-        tarlist = sorted(os.listdir(self.backup_dir))
+        tarlist = sorted(os.listdir(self.backup_dir))	
         for bkfile in tarlist:
             print >>self.loghandle, "\t file created: %s"%(bkfile)
+
+    def logevent(self, text):
+	print >>self.loghandle, "\t %s - "%(datetime.datetime.now().time()",
+	print >>self.loghandle, text,
+
 
     def do_backup(self):
         self.initlog()
         for query, (year, month) in itertools.izip(self.backup.iterate_queries(), self.backup.iterate_months()):
-            print >>self.loghandle, "Backuping %s / %s ... "%(month, year),
+	    self.logevent("Dumping month: %s/%s ..."%(month, year))
             mongodump = Mongodump.Mongodump(host = self.host, db = self.db, collections = [self.col])
             mongodump.set_query(query)
             mongodump.run()
-            print >>self.loghandle, "creating tarball ... ",
-            backup.tar_dump_directory(self.backup_dir, '%04s%02d'%(year,month))
-            print >>self.loghandle, "OK!"
+            self.logevent("creating tarball ...")
+            self.backup.tar_dump_directory(self.backup_dir, '%04s%02d'%(year,month))
+            self.logevent("OK!\n")
         self.logtarlist()
 
 def backupCommandLine():
