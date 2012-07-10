@@ -19,9 +19,8 @@ setup(
             "python-dateutil",
             "nose",
             "ludibrio",
-            "unittest",
             ],
         entry_points = { 'console_scripts' : ["backup88 = PyMongodump.Backup:backupCommandLine" ]},
         test_suite = 'nose.collector',
-        tests_require = ['nose', "ludibrio", "unittest"],
+        tests_require = ['nose', "ludibrio"],
         )
