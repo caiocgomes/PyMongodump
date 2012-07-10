@@ -65,8 +65,6 @@ class TestBackupIntegration(unittest.TestCase):
             mongodump.run()
             backup.tar_dump_directory('backup/','%04s%02d'%(year,month))
         tarlist = sorted(glob.glob("./backup/*.tar.gz")) #sorted(os.listdir(os.getcwd() + "/backup"))
-        for k in tarlist:
-            print k
         self.assertEqual(tarlist, sorted(["./backup/%04s%02d.tar.gz"%(year,month) for (year,month) in backup.iterate_months()]))
 
 class TestMongodumpIntegration(unittest.TestCase):

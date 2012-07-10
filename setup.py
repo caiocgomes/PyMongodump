@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*- 
+# -*- coding: utf-8 -*-
 from setuptools import setup
 
 
@@ -19,7 +19,6 @@ setup(
             "python-dateutil",
             "nose",
             "ludibrio",
-            "unittest",
             ],
         entry_points = { 'console_scripts' : ["backup88 = PyMongodump.Backup:backupCommandLine" ]},
         test_suite = 'nose.collector',

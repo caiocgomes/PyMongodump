@@ -70,7 +70,9 @@ class TestBackupScript(unittest.TestCase):
             pass
 
     def test_commandline_args(self):
-       script = Backup.BackupScript(host = "localhost", db = "tmp", col = "tmp", logpath = "backup.log")
+       script = Backup.BackupScript(host = "localhost", db = "tmp", col = "tmp", logpath = "backup.log", startMonth='012012')
+       timeobj = script.get_startTimeObject()
+       self.assertEqual(timeobj.get_mongotimestamp(), 1325376000000)
        self.assertEqual([script.host, script.db, script.col, script.logpath], ["localhost", "tmp", "tmp", "backup.log"])
 
     def test_create_backup_dir(self):
