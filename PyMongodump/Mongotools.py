@@ -26,8 +26,7 @@ class TimeObject:
         > dt2.get_mongotimestamp()
         0
     So, make sure your timestamp objects are timezone aware, or you'll get wrong
-    timestamps and you may lose data!! All naive datetimes objects are interpreted
-    as UTC.
+    timestamps and you may lose data!!
 
     Unless you state otherwise, a datetime object returned by tobj1.get_datetime()
     will be always in UTC time. To get any other timezone do:
@@ -52,12 +51,14 @@ class TimeObject:
         except ValueError:
             self.datetime.replace(tzinfo = self.localtz).astimezone(at_timezone)
 
-
     def get_mongotimestamp(self):
         return self.mongotimestamp
 
     def get_yearmonth(self):
         return (self.datetime.year, self.datetime.month)
+
+    def __str__(self):
+        return str(self.datetime)
 
 class MongoFill:
     def __init__(self, host = 'localhost' , db = 'tmp', col = 'tmp', port = 27017):
@@ -67,7 +68,6 @@ class MongoFill:
 
     def fill(self, n = 0):
         for i in xrange(n):
-            doc = self.rnd_doc()
             self.col.insert(self.rnd_doc())
 
     def rnd_doc(self):

@@ -1,14 +1,11 @@
 import datetime
 import calendar
 import pymongo
-from dateutil import relativedelta
-from PyMongodump import Mongotools, Mongodump
-import subprocess
+from PyMongodump import Mongotools, Mongodump, Utilities
 import argparse
 import itertools
-import os, shutil, sys, errno
+import os, shutil, sys
 import logging
-import ludibrio
 
 class EmptyCollectionError(ValueError):
     pass
@@ -23,12 +20,15 @@ def iterate_months((year0,month0), (year1, month1)):
 
 
 class BackupInicial:
-    def __init__(self, host = 'localhost', db = 'tmp', col = 'tmp', port = 27017):
+    def __init__(self, host = 'localhost', db = 'tmp', col = 'tmp', port = 27017, startTimeObject=None):
         self.connection = pymongo.Connection(host = host, port = port)
         self.col = self.connection[db][col]
         num_objects_to_backup = self.col.count()
         if num_objects_to_backup > 0:
-            self.first_date = Mongotools.TimeObject(list(self.col.find().sort("timestamp", pymongo.ASCENDING).limit(1))[0]["timestamp"])
+            if startTimeObject:
+                self.first_date = startTimeObject
+            else:
+                self.first_date = Mongotools.TimeObject(list(self.col.find().sort("timestamp", pymongo.ASCENDING).limit(1))[0]["timestamp"])
             self.last_date  = Mongotools.TimeObject(list(self.col.find().sort("timestamp", pymongo.DESCENDING).limit(1))[0]["timestamp"])
         else:
             raise EmptyCollectionError("This collection is empty")
@@ -85,17 +85,19 @@ class BackupHelper:
 
 
 class BackupScript:
-    def __init__(self, host = "localhost", db = "tmp", col = "tmp", logpath = "backup.log", **kwargs):# backupper = None, dumper = None):
+    def __init__(self, host = "localhost", db = "tmp", col = "tmp", logpath = "backup.log", startMonth = None, **kwargs):# backupper = None, dumper = None):
         self.host = host
         self.db   = db
         self.col  = col
         self.logpath = logpath
         self.logger  = logging.getLogger('backup_log')
+        self.startMonth = startMonth
         self.initialize_logger()
         if 'backupper' in kwargs:
             self.set_backupper(backupper = kwargs['backupper'])
         else:
-            self.set_backupper()
+            startTimeObject = self.get_startTimeObject()
+            self.set_backupper(startTimeObject=startTimeObject)
         if 'dumper' in kwargs:
             self.set_dumper(dumper = kwargs['dumper'])
         else:
@@ -106,10 +108,22 @@ class BackupScript:
             self.backup = kwargs['backupper']
         else:
             try:
-                self.backup = BackupInicial(host = self.host, db = self.db, col = self.col)
+                startTimeObject = kwargs['startTimeObject']
+                self.backup = BackupInicial(host = self.host, db = self.db, col = self.col, startTimeObject=startTimeObject)
             except:
                 self.logger.error("This collection is empty. Try again with a non-empty collection.")
+                print "This collection is empty. Try again with a non-empty collection"
+                sys.exit(1)
 
+    def get_startTimeObject(self):
+        if self.startMonth:
+            month = int(self.startMonth[0:2])
+            year  = int(self.startMonth[2:])
+            timezone_utc = Utilities.tz.tzutc()
+            startDatetime = datetime.datetime(day = 01, month = month, year = year, tzinfo=timezone_utc)
+        else:
+            startDatetime = None
+        return Mongotools.TimeObject(startDatetime)
 
     def iterate_backupper_months(self):
         return self.backup.iterate_months()
@@ -159,6 +173,7 @@ def backupCommandLine():
     parser.add_argument('--db', type = str, nargs = '?', required = True)
     parser.add_argument('--collection', type = str, nargs = '?', required = True)
     parser.add_argument('--logpath', type = str, nargs = '?', default = "backup.log")
+    parser.add_argument('--startMonth', type=str, default=None, nargs='?', required = False)
     args = parser.parse_args()
-    script = BackupScript(args.host, args.db, args.collection, args.logpath)
+    script = BackupScript(host=args.host, db=args.db, col=args.collection, logpath=args.logpath, startMonth=args.startMonth)
     script.do_backup()
